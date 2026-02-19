@@ -1,0 +1,1 @@
+"""MyAssistant package init."""
