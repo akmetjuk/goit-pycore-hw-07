@@ -42,9 +42,9 @@ class Name(Field):
 class Birthday(Field):
     def __init__(self, value):
         try:
-            self.value = datetime.strptime(value, "%Y.%m.%d")
+            self.value = datetime.strptime(value, "%d.%m.%Y")
         except ValueError:
-            raise ValueError(f"Invalid date format ({value}). Use YYYY.MM.DD")
+            raise ValueError(f"Invalid date format ({value}). Use DD.MM.YYYY")
 
 
 class Phone(Field):
@@ -96,7 +96,7 @@ class Record:
     def update_birthday(self, bday: str):
         """Додає або змінює дату народження 
         Args:
-            bday: Дата у форматі 'YYYY.MM.DD' 
+            bday: Дата у форматі 'DD.MM.YYYY' 
         Raises:
             ValueError: Якщо формат дати невірний
         """        
@@ -137,18 +137,17 @@ class AddressBook(UserDict):
     def get_upcoming_birthdays(self) -> str:
         """Отримати список користувачів з днями народження на наступному тижні.
         Args:
-            users: Список словників з ключами 'name' та 'birthday' (формат 'YYYY.MM.DD')
+            users: Список словників з ключами 'name' та 'birthday' (формат 'DD.MM.YYYY')
         Returns:
             Перелік співробітник з днями народження
         """
         today = datetime.today().date()
 
         upcoming = list()
-        for contact in self.data:
-            if not contact.birthday:
+        for record in self.data.values():
+            if not record.birthday:
                 continue
-            birthday = (datetime.strptime(contact.birthday, "%Y.%m.%d")
-                        .replace(year=today.year).date())
+            birthday = record.birthday.value.replace(year=today.year).date()
 
             # Якщо день народження вже минув цього року, розглядаємо наступний рік
             if birthday < today:
@@ -164,7 +163,7 @@ class AddressBook(UserDict):
             if weekday > 4:
                 birthday = birthday + timedelta(days=(7 - weekday))
 
-            upcoming.append(f"{contact} is celebrating he's birthday: {birthday}")
+            upcoming.append(f"Contact '{record.name.value}' has birthday on {record.birthday.value.strftime('%d.%m.%Y')}.")
 
         return upcoming 
 

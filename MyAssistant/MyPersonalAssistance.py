@@ -19,15 +19,16 @@ def input_error(func):
 
 @input_error
 def add_contact(args: list[str], contacts: ABook.AddressBook) -> str:
-    if len(args) != 2:
-        raise IndexError("Invalid number of arguments. Expecting NAME and PHONE.")
+    if len(args) < 1:
+        raise IndexError("Invalid number of arguments. Expecting at least NAME. You also can add PHONE.")
     name, phone = args
 
     if contacts.find(name):
         raise KeyError("Contact already exists.")
 
     new_record = ABook.Record(name)
-    new_record.add_phone(phone)
+    if phone:
+        new_record.add_phone(phone)
     contacts.add_record(new_record)
     return f"Contact '{name}' added."
 
@@ -68,7 +69,7 @@ def show_all(contacts: ABook.AddressBook) -> str:
 
 
 @input_error
-def addbirthday(args: list[str], contacts: ABook.AddressBook) -> str:    
+def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:    
     if len(args) != 2:
         raise IndexError("Invalid number of arguments. Expecting NAME and BIRTHDAY.")
     name, birthday = args
@@ -77,9 +78,37 @@ def addbirthday(args: list[str], contacts: ABook.AddressBook) -> str:
 
     try:
         contacts.update_birthday(name,birthday)
-    except ValueError:
-        raise ValueError(f"Inccorrect date value => {birthday} except YYYY.MM.DD")
+    except ValueError as e:
+        raise ValueError(e)
     return f"Contact '{name}' updated."
+
+
+@input_error
+def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:    
+    if len(args) != 2:
+        raise IndexError("Invalid number of arguments. Expecting NAME and BIRTHDAY.")
+    name, birthday = args
+    if not contacts.find(name):
+        raise KeyError(f"Contact '{name}' not found.")
+
+    try:
+        contacts.update_birthday(name,birthday)
+    except ValueError as e:
+        raise ValueError(e)
+    return f"Contact '{name}' updated."
+
+
+@input_error
+def show_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
+    if len(args) != 1:
+        raise IndexError("Invalid number of arguments. Expecting NAME.")
+    name = args[0]
+    record = contacts.find(name)
+    if not record:
+        raise KeyError(f"Contact '{name}' not found.")
+    if not record.birthday:
+        raise ValueError(f"Contact '{name}' has no birthday.")
+    return f"Contact '{name}' has birthday on {record.birthday.value.strftime('%d.%m.%Y')}."
 
 @input_error
 def birthdays(contacts: ABook.AddressBook) -> str:
@@ -119,10 +148,9 @@ def main():
         elif command == "all":
             print(show_all(contacts))
         elif command == "add-birthday":
-            print(addbirthday(args,contacts))
+            print(add_birthday(args,contacts))
         elif command == "show-birthday":
-            # реалізація
-            pass
+            print(show_birthday(args,contacts))
         elif command == "birthdays":            
             print(birthdays(contacts))
         elif command == "help":
