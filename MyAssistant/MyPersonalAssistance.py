@@ -21,32 +21,34 @@ def input_error(func):
 def add_contact(args: list[str], contacts: ABook.AddressBook) -> str:
     if len(args) < 1:
         raise IndexError("Invalid number of arguments. Expecting at least NAME. You also can add PHONE.")
-    name, phone = args
-
+    name = args[0]
+    phone = None
+    if len(args) > 1:
+        phone = args[1]
     if contacts.find(name):
-        raise KeyError("Contact already exists.")
-
-    new_record = ABook.Record(name)
-    if phone:
-        new_record.add_phone(phone)
-    contacts.add_record(new_record)
-    return f"Contact '{name}' added."
+        if phone:
+            contacts.change_phone(name, phone)
+    else:
+        new_record = ABook.Record(name)
+        if phone:
+            new_record.add_phone(phone)
+        contacts.add_record(new_record)
+    return f"Contact '{name}' updated with phone '{phone}'." if phone else f"Contact '{name}' added without phone."
 
 
 @input_error
 def change_contact(args: list[str], contacts: ABook.AddressBook) -> str:
-    if len(args) != 2:
+    if len(args) < 1:
         raise ValueError("Invalid number of arguments. Expecting NAME and PHONE.")
     name, phone = args
     record = contacts.find(name)
     if not record:
         raise KeyError(f"Contact '{name}' not found.")
     try:
-        contacts.change_phone(name, record.phones[0].value, phone)
-
-    except ValueError:
-        raise ValueError(f"Invalid phone number: {phone}")
-    return f"Contact '{name}' updated."
+        contacts.change_phone(name, phone, record.phones[0].value if record.phones else None)
+    except ValueError as e:
+        raise ValueError(f"Invalid phone number: {phone}. Error: {e}")
+    return f"Contact '{name}' updated with new phone '{phone}'."
 
 
 @input_error
@@ -69,7 +71,7 @@ def show_all(contacts: ABook.AddressBook) -> str:
 
 
 @input_error
-def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:    
+def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
     if len(args) != 2:
         raise IndexError("Invalid number of arguments. Expecting NAME and BIRTHDAY.")
     name, birthday = args
@@ -77,25 +79,10 @@ def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
         raise KeyError(f"Contact '{name}' not found.")
 
     try:
-        contacts.update_birthday(name,birthday)
+        contacts.update_birthday(name, birthday)
     except ValueError as e:
         raise ValueError(e)
-    return f"Contact '{name}' updated."
-
-
-@input_error
-def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:    
-    if len(args) != 2:
-        raise IndexError("Invalid number of arguments. Expecting NAME and BIRTHDAY.")
-    name, birthday = args
-    if not contacts.find(name):
-        raise KeyError(f"Contact '{name}' not found.")
-
-    try:
-        contacts.update_birthday(name,birthday)
-    except ValueError as e:
-        raise ValueError(e)
-    return f"Contact '{name}' updated."
+    return f"Contact '{name}' updated with birthday '{birthday}'."
 
 
 @input_error
@@ -110,9 +97,14 @@ def show_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
         raise ValueError(f"Contact '{name}' has no birthday.")
     return f"Contact '{name}' has birthday on {record.birthday.value.strftime('%d.%m.%Y')}."
 
+
 @input_error
 def birthdays(contacts: ABook.AddressBook) -> str:
-    return contacts.get_upcoming_birthdays()
+    bdays = contacts.get_upcoming_birthdays()
+    if not bdays:
+        return "No upcoming birthdays next 7 days."
+    return "\n".join(f"Contact '{record.name.value}' has birthday on {record.birthday.value.strftime('%d.%m.%Y')}." for record in bdays)
+
 
 def parse_input(user_input: str) -> tuple[str, ...]:
     cmd, *args = user_input.split()
@@ -148,10 +140,10 @@ def main():
         elif command == "all":
             print(show_all(contacts))
         elif command == "add-birthday":
-            print(add_birthday(args,contacts))
+            print(add_birthday(args, contacts))
         elif command == "show-birthday":
-            print(show_birthday(args,contacts))
-        elif command == "birthdays":            
+            print(show_birthday(args, contacts))
+        elif command == "birthdays":
             print(birthdays(contacts))
         elif command == "help":
             print(f"Use the following commands: {', '.join(__commands__)}")

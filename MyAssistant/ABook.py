@@ -36,7 +36,9 @@ class Field:
 
 
 class Name(Field):
-    pass
+    def __str__(self):
+        init(autoreset=True)
+        return f"{Fore.BLUE}{self.value}{Fore.RESET}"
 
 
 class Birthday(Field):
@@ -45,6 +47,10 @@ class Birthday(Field):
             self.value = datetime.strptime(value, "%d.%m.%Y")
         except ValueError:
             raise ValueError(f"Invalid date format ({value}). Use DD.MM.YYYY")
+
+    def __str__(self):
+        init(autoreset=True)
+        return f"birthday: {Fore.YELLOW}{self.value.strftime('%d.%m.%Y')}{Fore.RESET}"
 
 
 class Phone(Field):
@@ -63,7 +69,14 @@ class Record:
 
     def __str__(self):
         init(autoreset=True)
-        return f"Contact name: {Fore.BLUE}{self.name.value}{Fore.RESET}, phones: {Fore.GREEN}{'; '.join(p.value for p in self.phones)}{Fore.RESET}"
+        repres = f"Contact name: {self.name}"
+        if self.phones:
+            phones = '; '.join(p.value for p in self.phones).strip()
+            if len(phones) > 1:
+                repres += f", phones: {Fore.GREEN}{phones}{Fore.RESET}"
+        if self.birthday:
+            repres += f", {self.birthday}"
+        return repres
 
     def find_phone(self, phone: str) -> Phone | None:
         """
@@ -94,12 +107,12 @@ class Record:
             pass
 
     def update_birthday(self, bday: str):
-        """Додає або змінює дату народження 
+        """Додає або змінює дату народження
         Args:
-            bday: Дата у форматі 'DD.MM.YYYY' 
+            bday: Дата у форматі 'DD.MM.YYYY'
         Raises:
             ValueError: Якщо формат дати невірний
-        """        
+        """
         try:
             birthday = Birthday(bday)
             if birthday:
@@ -133,13 +146,12 @@ class AddressBook(UserDict):
     def __init__(self):
         self.data = {}
 
-        
-    def get_upcoming_birthdays(self) -> str:
+    def get_upcoming_birthdays(self) -> list[Record]:
         """Отримати список користувачів з днями народження на наступному тижні.
         Args:
             users: Список словників з ключами 'name' та 'birthday' (формат 'DD.MM.YYYY')
         Returns:
-            Перелік співробітник з днями народження
+            Перелік співробітників для привітання
         """
         today = datetime.today().date()
 
@@ -163,9 +175,9 @@ class AddressBook(UserDict):
             if weekday > 4:
                 birthday = birthday + timedelta(days=(7 - weekday))
 
-            upcoming.append(f"Contact '{record.name.value}' has birthday on {record.birthday.value.strftime('%d.%m.%Y')}.")
+            upcoming.append(record)
 
-        return upcoming 
+        return upcoming
 
     def add_record(self, record: Record):
         """Додайте запис до адресної книги.
@@ -190,12 +202,12 @@ class AddressBook(UserDict):
         """
         return self.data.get(str.lower(name).strip())
 
-    def change_phone(self, name: str, current_phone: str, new_phone: str):
+    def change_phone(self, name: str, new_phone: str, current_phone: str = None):
         """Змінює номер телефону для існуючого контакту.
         Args:
             name: Ім'я контакту для зміни
-            current_phone: Поточний номер телефону для заміни
             new_phone: Новий номер телефону
+            current_phone: Поточний номер телефону для заміни
         Raises:
             KeyError: Якщо контакт з таким ім'ям не знайдено
             ValueError: Якщо поточний номер телефону не знайдено в записі контакту
@@ -203,11 +215,14 @@ class AddressBook(UserDict):
         record = self.find(name)
         if not record:
             raise KeyError(f"Contact '{name}' not found.")
-        if not record.find_phone(current_phone):
-            raise ValueError(f"Phone '{current_phone}' not found for contact '{name}'.")
-        record.edit_phone(current_phone, new_phone)
+        if current_phone:
+            if not record.find_phone(current_phone):
+                raise ValueError(f"Phone '{current_phone}' not found for contact '{name}'.")
+            record.edit_phone(current_phone, new_phone)
+        else:
+            record.add_phone(new_phone)
 
-    def update_birthday(self, name: str, birthday: str):        
+    def update_birthday(self, name: str, birthday: str):
         record = self.find(name)
         if not record:
             raise KeyError(f"Contact '{name}' not found.")
