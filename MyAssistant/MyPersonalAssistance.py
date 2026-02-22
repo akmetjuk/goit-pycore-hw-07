@@ -1,4 +1,4 @@
-from . import ABook
+from . import abook 
 
 
 __commands__ = ["hello", "add", "change", "phone", "add-birthday", "show-birthday", "birthdays", "help", "all", "close", "exit"]
@@ -18,18 +18,18 @@ def input_error(func):
 
 
 @input_error
-def add_contact(args: list[str], contacts: ABook.AddressBook) -> str:
+def add_contact(args: list[str], contacts: abook.AddressBook) -> str:
     if len(args) < 1:
         raise IndexError("Invalid number of arguments. Expecting at least NAME. You also can add PHONE.")
-    name = args[0]
-    phone = None
+    name:str = args[0]
+    phone:str = None
     if len(args) > 1:
         phone = args[1]
     if contacts.find(name):
         if phone:
             contacts.change_phone(name, phone)
     else:
-        new_record = ABook.Record(name)
+        new_record = abook.Record(name)
         if phone:
             new_record.add_phone(phone)
         contacts.add_record(new_record)
@@ -37,11 +37,11 @@ def add_contact(args: list[str], contacts: ABook.AddressBook) -> str:
 
 
 @input_error
-def change_contact(args: list[str], contacts: ABook.AddressBook) -> str:
+def change_contact(args: list[str], contacts: abook.AddressBook) -> str:
     if len(args) < 1:
         raise ValueError("Invalid number of arguments. Expecting NAME and PHONE.")
     name, phone = args
-    record = contacts.find(name)
+    record:abook.Record = contacts.find(name)
     if not record:
         raise KeyError(f"Contact '{name}' not found.")
     try:
@@ -52,32 +52,31 @@ def change_contact(args: list[str], contacts: ABook.AddressBook) -> str:
 
 
 @input_error
-def show_phone(args: list[str], contacts: ABook.AddressBook) -> str:
+def show_phone(args: list[str], contacts: abook.AddressBook) -> str:
     if len(args) != 1:
         raise IndexError("Invalid number of arguments. Expecting NAME.")
-    name = args[0]
+    name:str = args[0]
     if not contacts:
         raise ValueError("Contacts not found.")
-    record = contacts.find(name)
+    record:abook.Record = contacts.find(name)
     if not record:
         raise KeyError(f"Contact '{name}' not found.")
     return record
 
 
-def show_all(contacts: ABook.AddressBook) -> str:
+def show_all(contacts: abook.AddressBook) -> str:
     if not contacts.data:
         return "No contacts found."
     return "\n".join(f"{record}" for record in contacts.data.values())
 
 
 @input_error
-def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
+def add_birthday(args: list[str], contacts: abook.AddressBook) -> str:
     if len(args) != 2:
         raise IndexError("Invalid number of arguments. Expecting NAME and BIRTHDAY.")
     name, birthday = args
     if not contacts.find(name):
         raise KeyError(f"Contact '{name}' not found.")
-
     try:
         contacts.update_birthday(name, birthday)
     except ValueError as e:
@@ -86,11 +85,11 @@ def add_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
 
 
 @input_error
-def show_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
+def show_birthday(args: list[str], contacts: abook.AddressBook) -> str:
     if len(args) != 1:
         raise IndexError("Invalid number of arguments. Expecting NAME.")
-    name = args[0]
-    record = contacts.find(name)
+    name:str = args[0]
+    record:abook.Record = contacts.find(name)
     if not record:
         raise KeyError(f"Contact '{name}' not found.")
     if not record.birthday:
@@ -99,8 +98,8 @@ def show_birthday(args: list[str], contacts: ABook.AddressBook) -> str:
 
 
 @input_error
-def birthdays(contacts: ABook.AddressBook) -> str:
-    bdays = contacts.get_upcoming_birthdays()
+def birthdays(contacts: abook.AddressBook) -> str:
+    bdays: list[abook.Record] = contacts.get_upcoming_birthdays()
     if not bdays:
         return "No upcoming birthdays next 7 days."
     return "\n".join(f"Contact '{record.name.value}' has birthday on {record.birthday.value.strftime('%d.%m.%Y')}." for record in bdays)
@@ -115,7 +114,7 @@ def parse_input(user_input: str) -> tuple[str, ...]:
 
 
 def main():
-    contacts = ABook.AddressBook()
+    contacts = abook.AddressBook()
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")

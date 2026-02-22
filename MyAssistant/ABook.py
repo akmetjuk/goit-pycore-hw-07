@@ -16,8 +16,8 @@ def normalize_phone(phone_number: str) -> str:
     Raises:
         ValueError: Якщо не вдалося виділити 10-значний номер
     """
-    pattern = r'\d+'
-    ph = ''.join(re.findall(pattern, phone_number))
+    pattern:str = r'\d+'
+    ph:str = ''.join(re.findall(pattern, phone_number))
     if len(ph) == 9:
         ph = '380' + ph
     if len(ph) == 10 and ph.startswith('0'):
@@ -31,12 +31,12 @@ class Field:
     def __init__(self, value):
         self.value = value
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
 
 class Name(Field):
-    def __str__(self):
+    def __str__(self) -> str:
         init(autoreset=True)
         return f"{Fore.BLUE}{self.value}{Fore.RESET}"
 
@@ -48,7 +48,7 @@ class Birthday(Field):
         except ValueError:
             raise ValueError(f"Invalid date format ({value}). Use DD.MM.YYYY")
 
-    def __str__(self):
+    def __str__(self) -> str:
         init(autoreset=True)
         return f"birthday: {Fore.YELLOW}{self.value.strftime('%d.%m.%Y')}{Fore.RESET}"
 
@@ -67,11 +67,11 @@ class Record:
         self.phones = []
         self.birthday = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         init(autoreset=True)
-        repres = f"Contact name: {self.name}"
+        repres:str = f"Contact name: {self.name}"
         if self.phones:
-            phones = '; '.join(p.value for p in self.phones).strip()
+            phones:str = '; '.join(p.value for p in self.phones).strip()
             if len(phones) > 1:
                 repres += f", phones: {Fore.GREEN}{phones}{Fore.RESET}"
         if self.birthday:
@@ -87,7 +87,7 @@ class Record:
             Знайдений об'єкт Phone або None, якщо не знайдено
         """
         try:
-            phone = normalize_phone(phone)
+            phone: str = normalize_phone(phone)
             for p in self.phones:
                 if p.value == phone:
                     return p
@@ -114,7 +114,7 @@ class Record:
             ValueError: Якщо формат дати невірний
         """
         try:
-            birthday = Birthday(bday)
+            birthday: Birthday = Birthday(bday)
             if birthday:
                 if birthday.value:
                     self.birthday = birthday
@@ -144,7 +144,7 @@ class Record:
 
 class AddressBook(UserDict):
     def __init__(self):
-        self.data = {}
+        super().__init__()
 
     def get_upcoming_birthdays(self) -> list[Record]:
         """Отримати список користувачів з днями народження на наступному тижні.
@@ -153,25 +153,25 @@ class AddressBook(UserDict):
         Returns:
             Перелік співробітників для привітання
         """
-        today = datetime.today().date()
+        today:datetime = datetime.today().date()
 
         upcoming = list()
         for record in self.data.values():
             if not record.birthday:
                 continue
-            birthday = record.birthday.value.replace(year=today.year).date()
+            birthday:datetime = record.birthday.value.replace(year=today.year).date()
 
             # Якщо день народження вже минув цього року, розглядаємо наступний рік
             if birthday < today:
                 birthday = birthday.replace(year=birthday.year + 1)
 
-            days_between = birthday.toordinal() - today.toordinal()
+            days_between:int = birthday.toordinal() - today.toordinal()
             # Розглядаємо дні народження на наступні 7 днів
             if days_between > 7:
                 continue
 
             # Якщо день народження на вихідний, переносимо на понеділок
-            weekday = birthday.weekday()
+            weekday:int = birthday.weekday()
             if weekday > 4:
                 birthday = birthday + timedelta(days=(7 - weekday))
 
@@ -186,9 +186,8 @@ class AddressBook(UserDict):
         Raises:
             IndexError: Якщо контакт з таким ім'ям вже існує
         """
-        n = str.lower(record.name.value).strip()
-        r = self.find(n)
-        if r:
+        n: str = str.lower(record.name.value).strip()
+        if self.find(n):
             raise IndexError(f"Contact '{record.name.value}' already exists.")
         self.data[n] = record
 
@@ -212,7 +211,7 @@ class AddressBook(UserDict):
             KeyError: Якщо контакт з таким ім'ям не знайдено
             ValueError: Якщо поточний номер телефону не знайдено в записі контакту
         """
-        record = self.find(name)
+        record: Record = self.find(name)
         if not record:
             raise KeyError(f"Contact '{name}' not found.")
         if current_phone:
@@ -223,7 +222,7 @@ class AddressBook(UserDict):
             record.add_phone(new_phone)
 
     def update_birthday(self, name: str, birthday: str):
-        record = self.find(name)
+        record: Record = self.find(name)
         if not record:
             raise KeyError(f"Contact '{name}' not found.")
         record.update_birthday(birthday)
